@@ -12,7 +12,7 @@ void main(void) {
   vec4 color = texture2D(u_texture, position);
   
   float scale = 0.5 + 0.5 * sin(position.x * 50.0 + time * 10.0);
-  // Multiply each color channel by an identity (1.0)
+  // Mix the color with the grayness
   color.r = mix(color.r, dot(color.rgb, grayness_mixer), scale);
   color.g = mix(color.g, dot(color.rgb, grayness_mixer), scale);
   color.b = mix(color.b, dot(color.rgb, grayness_mixer), scale);
