@@ -1,5 +1,10 @@
 import * as THREE from 'https://cdn.skypack.dev/three@0.129.0';
 
+const resolution = new THREE.Vector2(
+  window.innerWidth * window.devicePixelRatio,
+  window.innerHeight * window.devicePixelRatio
+);
+
 class Animation {
   constructor() {
     // scene renderer
@@ -10,7 +15,7 @@ class Animation {
     this.plane_geometry = new THREE.PlaneGeometry(2, 1.2);
 
     // animation variables
-    this.start = Date.now()/1000;
+    this.start = Date.now() / 1000;
 
     // image loader
     this.loader = new THREE.TextureLoader();
@@ -18,21 +23,18 @@ class Animation {
 
   async init() {
     const fragmentShader = await fetch('./fragmentShader.glsl').then(res => res.text());
-    this.plane_material = new THREE.ShaderMaterial( {
+    const texture = await new THREE.TextureLoader()
+      .loadAsync('https://sivanmehta.github.io/taco/taco-on-the-perch.png');
+
+    this.cat_material = new THREE.ShaderMaterial({
       uniforms: {
-          time: {value: 1},
-          resolution: { value: new THREE.Vector2(window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio) }
+        time: { value: 1 },
+        resolution: { value: resolution },
+        u_texture: { value: texture }
       },
       fragmentShader
     });
-    const plane_mesh = new THREE.Mesh(this.plane_geometry, this.plane_material);
-    plane_mesh.scale.set(window.innerWidth/window.innerHeight, 1, 1);
-    this.scene.add(plane_mesh);
-
-    const cat_material = new THREE.MeshBasicMaterial({
-      map: this.loader.load('https://sivanmehta.github.io/taco/taco-on-the-perch.png')
-    });
-    const cat_mesh = new THREE.Mesh(this.plane_geometry, cat_material);
+    const cat_mesh = new THREE.Mesh(this.plane_geometry, this.cat_material);
     cat_mesh.position.set(0,0,0);
     this.scene.add(cat_mesh);
     
@@ -42,7 +44,8 @@ class Animation {
   }
 
   tick() {
-    this.plane_material.uniforms.time.value = (Date.now()/1000) - this.start;
+    const now = Date.now() /1000 - this.start;
+    this.cat_material.uniforms.time.value = now;
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this.tick.bind(this));
   }

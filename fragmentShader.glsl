@@ -1,9 +1,22 @@
-vec2 pos;
+vec2 position;
 uniform float time;
 uniform vec2 resolution;
+uniform sampler2D u_texture;
+
+const vec3 grayness_mixer = vec3(0.2126, 0.7152, 0.0722);
 
 void main(void) {
-    vec2 pos = 2.0 * gl_FragCoord.xy / resolution.y - vec2(resolution.x/resolution.y, 1.0);
-    float distance = sqrt(pos.x*pos.x + pos.y*pos.y)*10.0;
-    gl_FragColor = vec4(1.0+cos(time*0.97+distance), 1.0+cos(time*0.59+distance), 1.0+cos(-0.83*time+distance), 2.0)/2.0;
+  // get the current position
+  vec2 position = (gl_FragCoord.xy / resolution.xy);
+  // the color at the given position
+  vec4 color = texture2D(u_texture, position);
+  
+  float scale = 0.5 + 0.5 * sin(position.x * 50.0 + time * 10.0);
+  // Multiply each color channel by an identity (1.0)
+  color.r = mix(color.r, dot(color.rgb, grayness_mixer), scale);
+  color.g = mix(color.g, dot(color.rgb, grayness_mixer), scale);
+  color.b = mix(color.b, dot(color.rgb, grayness_mixer), scale);
+
+  // Set the output color to the modified color
+  gl_FragColor = color;
 }
