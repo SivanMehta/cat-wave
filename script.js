@@ -5,6 +5,15 @@ const resolution = new THREE.Vector2(
   window.innerHeight
 );
 
+let mouseUp = true;
+
+document.addEventListener('mousedown', () => {
+  mouseUp = false;
+});
+document.addEventListener('mouseup', () => {
+  mouseUp = true;
+});
+
 class Animation {
   constructor() {
     // scene renderer
@@ -13,12 +22,16 @@ class Animation {
     document.body.appendChild(this.renderer.domElement);
     this.scene = new THREE.Scene();
     this.plane_geometry = new THREE.PlaneGeometry(2, 1.2);
-
+    
     // animation variables
     this.start = Date.now() / 1000;
-
+    
     // image loader
     this.loader = new THREE.TextureLoader();
+
+    // setup splash listener
+    this.lastClick = new THREE.Vector2(0, 0);
+    document.addEventListener('mousemove', this.mouseInteraction.bind(this));
   }
 
   async init() {
@@ -30,7 +43,8 @@ class Animation {
       uniforms: {
         time: { value: 1 },
         resolution: { value: resolution },
-        u_texture: { value: texture }
+        u_texture: { value: texture },
+        last_click: { value: this.lastClick }
       },
       fragmentShader
     });
@@ -48,6 +62,17 @@ class Animation {
     this.cat_material.uniforms.time.value = now;
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this.tick.bind(this));
+  }
+
+  mouseInteraction(event) {
+    if(mouseUp) return
+    this.lastClick = new THREE.Vector2(
+      event.clientX,
+      // because 0,0 is in the top left in the browser and bottom right in the GPU?
+      window.innerHeight - event.clientY
+    );
+    this.start = Date.now() / 1000;
+    this.cat_material.uniforms.last_click.value = this.lastClick;
   }
 }
 
