@@ -1,8 +1,8 @@
 import * as THREE from 'https://cdn.skypack.dev/three@0.129.0';
 
 const resolution = new THREE.Vector2(
-  window.innerWidth * window.devicePixelRatio,
-  window.innerHeight * window.devicePixelRatio
+  window.innerWidth,
+  window.innerHeight
 );
 
 class Animation {
