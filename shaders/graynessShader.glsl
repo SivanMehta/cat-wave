@@ -8,7 +8,7 @@ const vec3 grayness_mixer = vec3(0.2126, 0.7152, 0.0722);
 void main(void) {
   // get the current position
   vec2 position = (gl_FragCoord.xy / resolution.xy);
-  vec2 origin = (0.0, 0.0);
+  vec2 origin = vec2(0.0, 0.0);
   // the color at the given position
   vec4 color = texture2D(u_texture, position);
   // all red color for debugging

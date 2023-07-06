@@ -1,4 +1,5 @@
 import * as THREE from 'https://cdn.skypack.dev/three@0.129.0';
+import Animation from './animation.js';
 
 const resolution = new THREE.Vector2(
   window.innerWidth,
@@ -22,7 +23,7 @@ class Grayness {
   }
 
   async init() {
-    const fragmentShader = await fetch('./fragmentShader.glsl').then(res => res.text());
+    const fragmentShader = await fetch('./shaders/graynessShader.glsl').then(res => res.text());
     const texture = await new THREE.TextureLoader()
       .loadAsync('https://sivanmehta.github.io/taco/taco-on-the-perch.png');
 
@@ -48,17 +49,6 @@ class Grayness {
     this.cat_material.uniforms.time.value = now;
     this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this.tick.bind(this));
-  }
-
-  mouseInteraction(event) {
-    if(mouseUp) return
-    this.lastClick = new THREE.Vector2(
-      event.clientX,
-      // because 0,0 is in the top left in the browser and bottom right in the GPU?
-      window.innerHeight - event.clientY
-    );
-    this.start = Date.now() / 1000;
-    this.cat_material.uniforms.last_click.value = this.lastClick;
   }
 }
 
@@ -79,15 +69,15 @@ class Blur {
   }
 
   async init() {
-    const fragmentShader = await fetch('./fragmentShader.glsl').then(res => res.text());
+    const fragmentShader = await fetch('./shaders/blurShader.glsl').then(res => res.text());
     const texture = await new THREE.TextureLoader()
       .loadAsync('https://sivanmehta.github.io/taco/taco-on-the-perch.png');
 
     this.cat_material = new THREE.ShaderMaterial({
       uniforms: {
-        time: { value: 1 },
         resolution: { value: resolution },
         u_texture: { value: texture },
+        blurRadius: { value: 0.0 }
       },
       fragmentShader
     });
@@ -98,24 +88,59 @@ class Blur {
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.001, 1000);
     this.camera.position.set(0, 0, 1);
     this.scene.add(this.camera);
-  }
 
-  tick() {
-    const now = Date.now() /1000 - this.start;
-    this.cat_material.uniforms.time.value = now;
+    document.getElementById('blur-slider')
+      .addEventListener('input', this.updateSlider.bind(this));
+
     this.renderer.render(this.scene, this.camera);
-    requestAnimationFrame(this.tick.bind(this));
   }
 
-  mouseInteraction(event) {
-    if(mouseUp) return
-    this.lastClick = new THREE.Vector2(
-      event.clientX,
-      // because 0,0 is in the top left in the browser and bottom right in the GPU?
-      window.innerHeight - event.clientY
-    );
-    this.start = Date.now() / 1000;
-    this.cat_material.uniforms.last_click.value = this.lastClick;
+  tick() { }
+
+  updateSlider(event) {
+    const { value } = event.target;
+    this.blurRadius = value;
+    document.getElementById('blur-value').innerHTML = value;
+    this.cat_material.uniforms.blurRadius.value = value;
+    this.renderer.render(this.scene, this.camera);
+  }
+}
+
+class Rotation extends Animation {
+  constructor(id) {
+    super(id);
+  }
+
+  async postInit() {
+    const fragmentShader = await fetch('./shaders/rotationShader.glsl')
+      .then(res => res.text());
+    const texture = await new THREE.TextureLoader()
+      .loadAsync('https://sivanmehta.github.io/taco/taco-on-the-perch.png');
+
+    this.cat_material = new THREE.ShaderMaterial({
+      uniforms: {
+        resolution: { value: resolution },
+        u_texture: { value: texture },
+        u_angle: { value: 0.0 }
+      },
+      fragmentShader
+    });
+    const cat_mesh = new THREE.Mesh(this.plane_geometry, this.cat_material);
+    cat_mesh.position.set(0,0,0);
+    this.scene.add(cat_mesh);
+
+    this.u_angle = 0.0;
+
+    document.getElementById('rotation-slider')
+      .addEventListener('input', this.updateSlider.bind(this));
+  }
+
+  updateSlider(event) {
+    const { value } = event.target;
+    this.u_angle = value;
+    document.getElementById('rotation-value').innerHTML = value;
+    this.cat_material.uniforms.u_angle.value = value;
+    this.renderer.render(this.scene, this.camera);
   }
 }
 
@@ -128,9 +153,17 @@ const animations = [{
 }]
 
 async function start() {
-  const renders = animations.map(({ id, animation }) => new animation(id));
-  await Promise.all(renders.map(render => render.init()));
-  renders.forEach(render => render.tick());
+  // const renders = animations.map(({ id, animation }) => new animation(id));
+  // await Promise.all(renders.map(render => render.init()));
+  // renders.forEach(render => render.tick());
+
+  const animations = [
+    new Rotation({
+      target: document.getElementById('rotation'),
+    })
+  ];
+
+  await Promise.all(animations.map(animation => animation.start()));
 }
 
 start();
