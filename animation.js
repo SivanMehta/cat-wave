@@ -24,6 +24,7 @@ export default class Animation {
     this.renderer.setSize(this.resolution[0], this.resolution[1], pixelRatio);
     opts.target.appendChild(this.renderer.domElement);
     this.scene = new THREE.Scene();
+    this.plane_geometry = new THREE.PlaneGeometry(2, 1.2);
     
     // animation variables
     this.startTime = Date.now() / 1000;
@@ -63,6 +64,7 @@ export default class Animation {
   
   async _tick() {
     await this.tick();
+    this.renderer.render(this.scene, this.camera);
     requestAnimationFrame(this._tick.bind(this))
   }
 

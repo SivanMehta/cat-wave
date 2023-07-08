@@ -52,6 +52,32 @@ class Grayness {
   }
 }
 
+class Grayness2 extends Animation {
+  async preInit() {
+    const fragmentShader = await fetch('./shaders/graynessShader.glsl')
+      .then(res => res.text());
+    const texture = await new THREE.TextureLoader()
+      .loadAsync('https://sivanmehta.github.io/taco/taco-on-the-perch.png');
+
+    this.cat_material = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 1 },
+        resolution: { value: resolution },
+        u_texture: { value: texture },
+      },
+      fragmentShader
+    });
+    const cat_mesh = new THREE.Mesh(this.plane_geometry, this.cat_material);
+    cat_mesh.position.set(0,0,0);
+    this.scene.add(cat_mesh);
+  }
+
+  tick() {
+    const now = Date.now() / 1000 - this.start;
+    this.cat_material.uniforms.time.value = now;
+  }
+}
+
 class Blur {
   constructor(id) {
     // scene renderer
@@ -107,10 +133,6 @@ class Blur {
 }
 
 class Rotation extends Animation {
-  constructor(id) {
-    super(id);
-  }
-
   async postInit() {
     const fragmentShader = await fetch('./shaders/rotationShader.glsl')
       .then(res => res.text());
@@ -140,7 +162,6 @@ class Rotation extends Animation {
     this.u_angle = value;
     document.getElementById('rotation-value').innerHTML = value;
     this.cat_material.uniforms.u_angle.value = value;
-    this.renderer.render(this.scene, this.camera);
   }
 }
 
@@ -158,6 +179,9 @@ async function start() {
   // renders.forEach(render => render.tick());
 
   const animations = [
+    new Grayness2({
+      target: document.getElementById('grayness'),
+    }),
     new Rotation({
       target: document.getElementById('rotation'),
     })
